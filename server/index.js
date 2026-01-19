@@ -1,4 +1,5 @@
-require('dotenv').config();
+require('dotenv').config({ path: '.env.local' });
+require('dotenv').config(); // Fallback to .env if .env.local doesn't exist or misses keys
 const express = require('express');
 const nodemailer = require('nodemailer');
 const cors = require('cors');
@@ -27,15 +28,17 @@ const transporter = nodemailer.createTransport({
 
 // Routes
 app.post('/api/contact', async (req, res) => {
+    console.log('Received contact request:', req.body); // Log the incoming request
     const { name, email, message } = req.body;
 
     if (!name || !email || !message) {
+        console.log('Validation failed: Missing fields');
         return res.status(400).json({ error: 'All fields are required' });
     }
 
     const mailOptions = {
-        from: process.env.EMAIL_USER, // Sender must be the authenticated user for Gmail
-        replyTo: email, // Allow replying directly to the person who contacted you
+        from: process.env.EMAIL_USER,
+        replyTo: email,
         to: process.env.EMAIL_USER,
         subject: `Portfolio Contact from ${name}`,
         text: `
@@ -49,16 +52,16 @@ app.post('/api/contact', async (req, res) => {
 
     try {
         await transporter.sendMail(mailOptions);
+        console.log('Email sent successfully');
         res.status(200).json({ message: 'Message sent successfully!' });
     } catch (error) {
-        console.error('Error sending email:', error);
-        res.status(500).json({ error: 'Failed to send message' });
+        console.error('Error sending email:', error); // This log is crucial
+        res.status(500).json({ error: 'Failed to send message', details: error.message });
     }
 });
 
-// The "catchall" handler: for any request that doesn't
-// match one above, send back React's index.html file.
-app.get('*', (req, res) => {
+// The "catchall" handler
+app.get(/(.*)/, (req, res) => {
     res.sendFile(path.join(__dirname, '../dist/index.html'));
 });
 

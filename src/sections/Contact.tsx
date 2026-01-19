@@ -32,10 +32,12 @@ export default function Contact() {
                 setFormData({ name: '', email: '', message: '' });
                 setTimeout(() => setStatus('idle'), 5000);
             } else {
+                const data = await response.json();
+                console.error('Server responded with error:', data);
                 setStatus('error');
             }
         } catch (error) {
-            console.error('Error sending message:', error);
+            console.error('Error sending message (network or parsing):', error);
             setStatus('error');
         }
     };
